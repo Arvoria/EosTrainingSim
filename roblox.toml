@@ -8115,6 +8115,9 @@ type = "number"
 [[math.log.args]]
 type = "number"
 
+[[math.round.args]]
+type = "number"
+
 [[math.log.args]]
 required = false
 type = "number"

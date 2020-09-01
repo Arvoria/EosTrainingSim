@@ -41,6 +41,14 @@
 		"$path": "src/ServerStorage"
 	},
 
+	"StarterPlayer": {
+		"$className": "StarterPlayer",
+		"StarterPlayerScripts" : {
+			"$className": "StarterPlayerScripts",
+			"$path": "src/ClientScripts"
+		}
+	},
+
     "SoundService": {
       "$className": "SoundService",
       "$properties": {
