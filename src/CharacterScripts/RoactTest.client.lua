@@ -9,4 +9,15 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 
-local handle = Roact.mount(Roact.createElement(HealthBarApp, {humanoid = Humanoid}), PlayerGui, "HealthBar")
+local handle = Roact.mount(
+	Roact.createElement(
+		HealthBarApp, 
+		{
+			Humanoid=Humanoid,
+			HumanoidMaxHealth=Humanoid.MaxHealth,
+			Impulse = 0
+		}
+	), 
+	PlayerGui, 
+	"HealthBar"
+)

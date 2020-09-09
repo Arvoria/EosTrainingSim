@@ -6,7 +6,20 @@ local HealthApp = Roact.Component:extend("HealthApp")
 local Flipper = import "packages/Flipper"
 
 function HealthApp:init()
-	self.healthMotor = Flipper.SingleMotor.new(self.props.humanoid.Health)
+	local health, impulse = self.props.Humanoid.Health, self.props.Impulse
+
+	self.healthMotor = Flipper.GroupMotor.new({Health=health, Impulse=impulse})
+	local motors = self.healthMotor:getValue()
+
+	local animation, updateAnimation = Roact.createBinding(motors)
+	self.animation = animation
+
+	self.healthMotor:onStep(updateAnimation)
+	self.healthMotor:start()
+
+
+
+	--[[self.healthMotor = Flipper.SingleMotor.new(self.props.Humanoid.Health)
 
 	local healthBind, setHealthBind = Roact.createBinding(self.healthMotor:getValue())
 	self.healthBinding = healthBind
@@ -17,106 +30,83 @@ function HealthApp:init()
 	self:setState({
 		MaxHealth = 100,
 		HealthAmount = self.healthBinding,
-	})
+	})--]]
 end
 
 function HealthApp:render()
 	return Roact.createElement(
 		"ScreenGui", 
-		{ -- ScreenGui Props
+		{ -- ScreenGui Properties
 			Name = "HealthBarGui",
+			ZIndexBehavior = Enum.ZIndexBehavior.Global,
 		},
 		{ -- ScreenGui Children
 			HealthBarContainer = Roact.createElement("Frame", 
-				{ -- HealthBarContainer Props
-					Name = "HealthBarContainer",
-					Size = UDim2.new(0.25, 0, 0.025, 0),
-					AnchorPoint = Vector2.new(0.5, 1),
-					Position = UDim2.new(0.5, 0, 0.9, 0),
-					BackgroundTransparency = 0.6,
-					BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+				{ -- HealthBarContainer Properties
+					Size = UDim2.new(0.2, 0, 0.025, 0),
+					Position = UDim2.new(0.5, 0, 0.8, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					BackgroundColor3 = Color3.fromRGB(15, 15, 15),
+					BackgroundTransparency = 0.3,
 					BorderSizePixel = 0,
+					ZIndex = 1,
 				},
 				{ -- HealthBarContainer Children
+					ContainerCorner = Roact.createElement("UICorner",
+						{ -- ContainerCorner Properties
+							CornerRadius = UDim.new(0.2, 0)
+						}
+					),
+
 					HealthBar = Roact.createElement("Frame", 
-						{ -- HealthBar Props
-							Size = UDim2.new(0.975, 0, 0.75, 0),
-							AnchorPoint = Vector2.new(0.5, 0.5),
-							Position = UDim2.new(0.5, 0, 0.5, 0),
-							BackgroundTransparency = 1,
+						{ -- HealthBar Properties
+							Size = self.animation:map(function(values)
+								local value = values.Health
+								value = math.clamp(value, 0, self.props.HumanoidMaxHealth)
+								value = math.round(value)
+								value = value / self.props.HumanoidMaxHealth
+								return UDim2.new(value, 0, 1, 0)
+							end),
+							Position = UDim2.new(0, 0, 0.5, 0),
+							AnchorPoint = Vector2.new(0, 0.5),
+							BackgroundColor3 = Color3.fromRGB(20, 175, 50),
 							BorderSizePixel = 0,
+							BackgroundTransparency = 0.1,
+							ZIndex = 3,
+							
 						},
 						{ -- HealthBar Children
-							Bar = Roact.createElement("Frame",
-								{ -- Bar Props
-									Size = self.healthBinding:map(function(value)
-										value = math.clamp(value, 0, self.state.MaxHealth)
-										value = math.round(value)
-										value = value/self.state.MaxHealth
-										return UDim2.new(value, 0, 1, 0)
-									end),
-									BackgroundColor3 = self.healthBinding:map(function(value)
-										return Color3.fromRGB(0, 200, 75)
-									end),
-									AnchorPoint = Vector2.new(0, 0.5),
-									Position = UDim2.new(0, 0, 0.5, 0),
-									BorderSizePixel = 0,
-								},
-								{ -- Bar Children
-									BarGradient = Roact.createElement("UIGradient",
-										{ -- BarGradient Props
-											Color = self.healthBinding:map(function(value)
-												value = math.round(value)
-												value = value/self.state.MaxHealth
-												value = 1-math.clamp(value, 0.2, 1)
-												print(value)
-												return ColorSequence.new(
-												{
-													ColorSequenceKeypoint.new(0, Color3.new(0.2, 0.2, 0.2)),
-													ColorSequenceKeypoint.new(value, Color3.new(value, value, value)),
-													ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
-												})
-											end),
-											Transparency = NumberSequence.new(0),
-										}
-									),
-
-									BarCornerEffect = Roact.createElement("UICorner", 
-										{ -- ContainerCornerEffect Props
-											CornerRadius = UDim.new(0.25, 0),
-										}
-									),
+							BarCorner = Roact.createElement("UICorner",
+								{ -- BarCorner Properties
+									CornerRadius = UDim.new(0.2, 0)
 								}
-							)
+							),
 						}
 					),
 
-					ContainerCornerEffect = Roact.createElement("UICorner", 
-						{ -- ContainerCornerEffect Props
-							CornerRadius = UDim.new(0.25, 0),
-						}
-					),
-
-					HealthText = Roact.createElement("TextLabel", 
-						{ -- HealthText Props
-							Size = UDim2.new(0.4, 0, 1, 0),
-							AnchorPoint = Vector2.new(0, 0.5),
-							Position = UDim2.new(1, 0, 0.5, 0),
-							BorderSizePixel = 0,
+					HealthLabel = Roact.createElement("TextLabel",
+						{ -- HealthLabel Properties
+							Size = UDim2.new(0.2, 0, 0.85, 0),
+							AnchorPoint = Vector2.new(1, 0.5),
+							Position = UDim2.new(0.975, 0, 0.5, 0),
 							BackgroundTransparency = 1,
-							Text = self.healthBinding:map(function(value)
-								value = math.clamp(value, 0, self.state.MaxHealth)
+							BorderSizePixel = 0,
+							TextColor3 = Color3.fromRGB(90, 200, 90),
+							Font = Enum.Font.GothamSemibold,
+							TextXAlignment = Enum.TextXAlignment.Right,
+							TextStrokeColor3 = Color3.fromRGB(15, 15, 15),
+							--TextStrokeTransparency = 0.6,
+							TextScaled = true,
+							ZIndex = 4,
+							Text = self.animation:map(function(values)
+								local value = values.Health
+								value = math.clamp(value, 0, self.props.HumanoidMaxHealth)
 								value = math.round(value)
-								return tostring(value).."%"
+								value = tostring(value)
+								return value
 							end),
-							TextColor3 = Color3.fromRGB(0, 200, 60),
-							TextSize = 24,
-							TextStrokeColor3 = Color3.fromRGB(60, 60, 60),
-							TextStrokeTransparency = 0,
-							TextXAlignment = Enum.TextXAlignment.Left,
-							Font = Enum.Font.GothamBold,
 						},
-						{ -- HealthText Children
+						{ -- HealthLabel Children
 						
 						}
 					)
@@ -127,14 +117,21 @@ function HealthApp:render()
 end
 
 function HealthApp:didMount()
-	local hum = self.props.humanoid
+	local hum = self.props.Humanoid
+	local maxHealth = self.props.HumanoidMaxHealth
+	local impulse = self.props.Impulse
 
 	hum:GetPropertyChangedSignal("Health"):Connect(function()
-		self.healthMotor:setGoal(Flipper.Spring.new(hum.Health, 
-		{
-			frequency = 1,
-			dampingRatio = 1,
-		}))		
+		local healthGoal = { frequency=1, dampingRatio=1 }
+		local impulseGoal = { frequency=1, dampingRatio=1 }
+		local goals = {
+			Health = Flipper.Spring.new(hum.Health, healthGoal),
+			Impulse = Flipper.Spring.new(impulse, impulseGoal),
+		}
+		impulse = 1
+		self.healthMotor:setGoal(goals)
+		impulse = 0
+		self.healthMotor:setGoal(goals)
 	end)
 end
 
