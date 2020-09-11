@@ -16,21 +16,6 @@ function HealthApp:init()
 
 	self.healthMotor:onStep(updateAnimation)
 	self.healthMotor:start()
-
-
-
-	--[[self.healthMotor = Flipper.SingleMotor.new(self.props.Humanoid.Health)
-
-	local healthBind, setHealthBind = Roact.createBinding(self.healthMotor:getValue())
-	self.healthBinding = healthBind
-
-	self.healthMotor:onStep(setHealthBind)
-	self.healthMotor:start()
-
-	self:setState({
-		MaxHealth = 100,
-		HealthAmount = self.healthBinding,
-	})--]]
 end
 
 function HealthApp:render()
@@ -69,7 +54,13 @@ function HealthApp:render()
 							end),
 							Position = UDim2.new(0, 0, 0.5, 0),
 							AnchorPoint = Vector2.new(0, 0.5),
-							BackgroundColor3 = Color3.fromRGB(20, 175, 50),
+							BackgroundColor3 = self.animation:map(function(values)
+								local value = values.Impulse
+								
+								local h, s, v = 130-(130*value), 90, 70
+								local color = Color3.fromHSV(h/360, s/100, v/100)
+								return color
+							end),
 							BorderSizePixel = 0,
 							BackgroundTransparency = 0.1,
 							ZIndex = 3,
@@ -91,7 +82,13 @@ function HealthApp:render()
 							Position = UDim2.new(0.975, 0, 0.5, 0),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
-							TextColor3 = Color3.fromRGB(90, 200, 90),
+							TextColor3 = self.animation:map(function(values)
+								local value = values.Impulse
+								
+								local h, s, v = 120-(120*value), 40, 85
+								local color = Color3.fromHSV(h/360, s/100, v/100)								
+								return color
+							end),
 							Font = Enum.Font.GothamSemibold,
 							TextXAlignment = Enum.TextXAlignment.Right,
 							TextStrokeColor3 = Color3.fromRGB(15, 15, 15),
@@ -120,23 +117,24 @@ function HealthApp:didMount()
 	local hum = self.props.Humanoid
 	local maxHealth = self.props.HumanoidMaxHealth
 	local impulse = self.props.Impulse
+	local oldHealth = hum.Health
+	
+	hum.HealthChanged:Connect(function(newHealth)
+		local didIncrease = newHealth>oldHealth
 
-	hum:GetPropertyChangedSignal("Health"):Connect(function()
-		local healthGoal = { frequency=1, dampingRatio=1 }
-		local impulseGoal = { frequency=1, dampingRatio=1 }
-		local goals = {
-			Health = Flipper.Spring.new(hum.Health, healthGoal),
-			Impulse = Flipper.Spring.new(impulse, impulseGoal),
-		}
-		impulse = 1
-		self.healthMotor:setGoal(goals)
-		impulse = 0
-		self.healthMotor:setGoal(goals)
+		self.healthMotor:setGoal({
+			Impulse = Flipper.Instant.new(didIncrease and 0 or 1),
+			Health = Flipper.Spring.new(newHealth, {frequency=1, dampingRatio=1}),
+		})
+		self.healthMotor:step(0)
+		self.healthMotor:setGoal({Impulse=Flipper.Spring.new(0, {frequency=1, dampingRatio=1})})
+		
+		oldHealth = newHealth
 	end)
 end
 
 function HealthApp:willUnmount()
-	
+	self.healthMotor:destroy()
 end
 
 return HealthApp

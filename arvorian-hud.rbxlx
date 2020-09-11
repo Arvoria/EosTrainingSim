@@ -61,21 +61,6 @@ function HealthApp:init()
 
 	self.healthMotor:onStep(updateAnimation)
 	self.healthMotor:start()
-
-
-
-	--[[self.healthMotor = Flipper.SingleMotor.new(self.props.Humanoid.Health)
-
-	local healthBind, setHealthBind = Roact.createBinding(self.healthMotor:getValue())
-	self.healthBinding = healthBind
-
-	self.healthMotor:onStep(setHealthBind)
-	self.healthMotor:start()
-
-	self:setState({
-		MaxHealth = 100,
-		HealthAmount = self.healthBinding,
-	})--]]
 end
 
 function HealthApp:render()
@@ -114,7 +99,13 @@ function HealthApp:render()
 							end),
 							Position = UDim2.new(0, 0, 0.5, 0),
 							AnchorPoint = Vector2.new(0, 0.5),
-							BackgroundColor3 = Color3.fromRGB(20, 175, 50),
+							BackgroundColor3 = self.animation:map(function(values)
+								local value = values.Impulse
+								
+								local h, s, v = 130-(130*value), 90, 70
+								local color = Color3.fromHSV(h/360, s/100, v/100)
+								return color
+							end),
 							BorderSizePixel = 0,
 							BackgroundTransparency = 0.1,
 							ZIndex = 3,
@@ -136,7 +127,13 @@ function HealthApp:render()
 							Position = UDim2.new(0.975, 0, 0.5, 0),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
-							TextColor3 = Color3.fromRGB(90, 200, 90),
+							TextColor3 = self.animation:map(function(values)
+								local value = values.Impulse
+								
+								local h, s, v = 120-(120*value), 40, 85
+								local color = Color3.fromHSV(h/360, s/100, v/100)								
+								return color
+							end),
 							Font = Enum.Font.GothamSemibold,
 							TextXAlignment = Enum.TextXAlignment.Right,
 							TextStrokeColor3 = Color3.fromRGB(15, 15, 15),
@@ -165,23 +162,24 @@ function HealthApp:didMount()
 	local hum = self.props.Humanoid
 	local maxHealth = self.props.HumanoidMaxHealth
 	local impulse = self.props.Impulse
+	local oldHealth = hum.Health
+	
+	hum.HealthChanged:Connect(function(newHealth)
+		local didIncrease = newHealth>oldHealth
 
-	hum:GetPropertyChangedSignal("Health"):Connect(function()
-		local healthGoal = { frequency=1, dampingRatio=1 }
-		local impulseGoal = { frequency=1, dampingRatio=1 }
-		local goals = {
-			Health = Flipper.Spring.new(hum.Health, healthGoal),
-			Impulse = Flipper.Spring.new(impulse, impulseGoal),
-		}
-		impulse = 1
-		self.healthMotor:setGoal(goals)
-		impulse = 0
-		self.healthMotor:setGoal(goals)
+		self.healthMotor:setGoal({
+			Impulse = Flipper.Instant.new(didIncrease and 0 or 1),
+			Health = Flipper.Spring.new(newHealth, {frequency=1, dampingRatio=1}),
+		})
+		self.healthMotor:step(0)
+		self.healthMotor:setGoal({Impulse=Flipper.Spring.new(0, {frequency=1, dampingRatio=1})})
+		
+		oldHealth = newHealth
 	end)
 end
 
 function HealthApp:willUnmount()
-	
+	self.healthMotor:destroy()
 end
 
 return HealthApp</string>
@@ -16805,32 +16803,38 @@ local Wyvern = { }</string>
           </Properties>
         </Item>
       </Item>
+      <Item class="ModuleScript" referent="192">
+        <Properties>
+          <string name="Name">Training</string>
+          <string name="Source"></string>
+        </Properties>
+      </Item>
     </Item>
-    <Item class="Script" referent="192">
+    <Item class="Script" referent="193">
       <Properties>
         <string name="Name">Server</string>
         <string name="Source"></string>
       </Properties>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="193">
+  <Item class="ServerStorage" referent="194">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="Folder" referent="194">
+    <Item class="Folder" referent="195">
       <Properties>
         <string name="Name">Assets</string>
       </Properties>
     </Item>
-    <Item class="Folder" referent="195">
+    <Item class="Folder" referent="196">
       <Properties>
         <string name="Name">Perses</string>
       </Properties>
-      <Item class="Folder" referent="196">
+      <Item class="Folder" referent="197">
         <Properties>
           <string name="Name">Training</string>
         </Properties>
-        <Item class="Folder" referent="197">
+        <Item class="Folder" referent="198">
           <Properties>
             <string name="Name">Maps</string>
           </Properties>
@@ -16838,21 +16842,21 @@ local Wyvern = { }</string>
       </Item>
     </Item>
   </Item>
-  <Item class="SoundService" referent="198">
+  <Item class="SoundService" referent="199">
     <Properties>
       <string name="Name">SoundService</string>
       <bool name="RespectFilteringEnabled">true</bool>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="199">
+  <Item class="StarterPlayer" referent="200">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterCharacterScripts" referent="200">
+    <Item class="StarterCharacterScripts" referent="201">
       <Properties>
         <string name="Name">StarterCharacterScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="201">
+      <Item class="LocalScript" referent="202">
         <Properties>
           <string name="Name">RoactTest</string>
           <string name="Source">local import = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").packages.Import)
@@ -16881,18 +16885,18 @@ local handle = Roact.mount(
         </Properties>
       </Item>
     </Item>
-    <Item class="StarterPlayerScripts" referent="202">
+    <Item class="StarterPlayerScripts" referent="203">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
     </Item>
   </Item>
-  <Item class="Workspace" referent="203">
+  <Item class="Workspace" referent="204">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="FilteringEnabled">true</bool>
     </Properties>
-    <Item class="Part" referent="204">
+    <Item class="Part" referent="205">
       <Properties>
         <string name="Name">Baseplate</string>
         <bool name="Anchored">true</bool>
