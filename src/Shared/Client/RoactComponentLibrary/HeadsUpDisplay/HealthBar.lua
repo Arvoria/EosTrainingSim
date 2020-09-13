@@ -28,8 +28,8 @@ function HealthApp:render()
 		{ -- ScreenGui Children
 			HealthBarContainer = Roact.createElement("Frame", 
 				{ -- HealthBarContainer Properties
-					Size = UDim2.new(0.2, 0, 0.025, 0),
-					Position = UDim2.new(0.5, 0, 0.8, 0),
+					Size = UDim2.new(0.15, 0, 0.02, 0),
+					Position = UDim2.new(0.5, 0, 0.9, 0),
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundColor3 = Color3.fromRGB(15, 15, 15),
 					BackgroundTransparency = 0.3,
@@ -72,6 +72,22 @@ function HealthApp:render()
 									CornerRadius = UDim.new(0.2, 0)
 								}
 							),
+
+							ContainerGradient = Roact.createElement("UIGradient", 
+								{
+									Color = ColorSequence.new({
+										ColorSequenceKeypoint.new(0, Color3.fromHSV(0, 0, 150/255)),
+										ColorSequenceKeypoint.new(1, Color3.fromHSV(0, 0, 255/255)),
+									}),
+									Offset = self.animation:map(function(values)
+										local value = values.Health
+										value = math.clamp(value, 0, self.props.HumanoidMaxHealth)
+										value = math.round(value)
+										value = value / self.props.HumanoidMaxHealth
+										return Vector2.new(1-value, 0)
+									end)
+								}
+							),
 						}
 					),
 
@@ -89,10 +105,10 @@ function HealthApp:render()
 								local color = Color3.fromHSV(h/360, s/100, v/100)								
 								return color
 							end),
-							Font = Enum.Font.GothamSemibold,
+							Font = Enum.Font.GothamBold,
 							TextXAlignment = Enum.TextXAlignment.Right,
 							TextStrokeColor3 = Color3.fromRGB(15, 15, 15),
-							--TextStrokeTransparency = 0.6,
+							TextStrokeTransparency = 0.8,
 							TextScaled = true,
 							ZIndex = 4,
 							Text = self.animation:map(function(values)
@@ -103,6 +119,7 @@ function HealthApp:render()
 								return value
 							end),
 						},
+						
 						{ -- HealthLabel Children
 						
 						}
@@ -124,10 +141,10 @@ function HealthApp:didMount()
 
 		self.healthMotor:setGoal({
 			Impulse = Flipper.Instant.new(didIncrease and 0 or 1),
-			Health = Flipper.Spring.new(newHealth, {frequency=1, dampingRatio=1}),
+			Health = Flipper.Spring.new(newHealth, {frequency=1.2, dampingRatio=1}),
 		})
 		self.healthMotor:step(0)
-		self.healthMotor:setGoal({Impulse=Flipper.Spring.new(0, {frequency=1, dampingRatio=1})})
+		self.healthMotor:setGoal({Impulse=Flipper.Spring.new(0, {frequency=0.6, dampingRatio=1})})
 		
 		oldHealth = newHealth
 	end)

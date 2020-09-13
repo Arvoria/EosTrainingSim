@@ -1,6 +1,7 @@
 local import = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").packages.Import)
 local Roact = import "packages/Roact"
-local HealthBarApp = import "RCL/HealthBar"
+
+local HealthBarApp = import "RCL/HeadsUpDisplay/HealthBar"
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
