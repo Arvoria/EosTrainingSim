@@ -6,7 +6,7 @@ local Gamemode = {
 }
 Gamemode.__index = Gamemode
 
-Gamemode._event = nil
+Gamemode._event = false
 
 function Gamemode.new(self, event)
 	assert(self, "Must provide a Gamemode")
