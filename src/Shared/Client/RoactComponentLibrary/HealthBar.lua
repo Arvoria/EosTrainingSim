@@ -1,9 +1,9 @@
 local import = require(game.ReplicatedStorage.Shared.packages.Import)
 
-local Roact = import "packages/Roact"
-local HealthApp = Roact.Component:extend("HealthApp")
+local Roact = import "Packages/Roact"
+local Flipper = import "Packages/Flipper"
 
-local Flipper = import "packages/Flipper"
+local HealthApp = Roact.Component:extend("HealthApp")
 
 function HealthApp:init()
 	self.healthMotor = Flipper.SingleMotor.new(self.props.humanoid.Health)
@@ -91,7 +91,7 @@ function HealthApp:render()
 						}
 					),
 
-					ContainerCornerEffect = Roact.createElement("UICorner", 
+					ContainerCornerEffect = Roact.createElement("UICorner",
 						{ -- ContainerCornerEffect Props
 							CornerRadius = UDim.new(0.25, 0),
 						}
@@ -117,7 +117,7 @@ function HealthApp:render()
 							Font = Enum.Font.GothamBold,
 						},
 						{ -- HealthText Children
-						
+
 						}
 					)
 				}
@@ -130,11 +130,11 @@ function HealthApp:didMount()
 	local hum = self.props.humanoid
 
 	hum:GetPropertyChangedSignal("Health"):Connect(function()
-		self.healthMotor:setGoal(Flipper.Spring.new(hum.Health, 
+		self.healthMotor:setGoal(Flipper.Spring.new(hum.Health,
 		{
 			frequency = 1,
 			dampingRatio = 1,
-		}))		
+		}))
 	end)
 end
 

@@ -55,10 +55,10 @@ function Importer.new(dataModel)
 
 	self._config = {
 		aliases = {
-			shared = game.ReplicatedStorage.Shared,
+			Shared = game.ReplicatedStorage.Shared,
 			Client = game.ReplicatedStorage.Shared.Client,
 			RCL = game.ReplicatedStorage.Shared.Client.RoactComponentLibrary,
-			packages = game.ReplicatedStorage.Shared.packages
+			Packages = game.ReplicatedStorage.Shared.packages
 		},
 		useWaitForChild = false,
 		waitForChildTimeout = 1,

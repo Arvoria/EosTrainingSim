@@ -21,7 +21,8 @@
           0.0
         ],
         "Outlines": false
-      }
+      },
+      "$ignoreUnknownInstances": true
 	},
 	
     "ReplicatedStorage": {
@@ -33,19 +34,14 @@
 
 	"ServerScriptService": {
 		"$className": "ServerScriptService",
-		"$path": "src/Server"
-	},
-
-	"ServerStorage": {
-		"$className": "ServerStorage",
-		"$path": "src/ServerStorage"
+		"$path": "src/Server/Scripts"
 	},
 
 	"StarterPlayer": {
 		"$className": "StarterPlayer",
 		"StarterPlayerScripts" : {
 			"$className": "StarterPlayerScripts",
-			"$path": "src/ClientScripts"
+			"$path": "src/Client"
 		}
 	},
 
@@ -64,23 +60,24 @@
       "Baseplate": {
         "$className": "Part",
         "$properties": {
-          "Position": [
-            0.0,
-            -10.0,
-            0.0
-          ],
+          "Position": [0.0, -5.0, 0.0 ],
           "Locked": true,
           "Anchored": true,
-          "Size": [
-            512.0,
-            20.0,
-            512.0
-          ],
-          "Color": [
-            0.38823,
-            0.37254,
-            0.38823
-          ]
+          "Size": [ 128.0, 10.0, 128.0 ],
+          "Color": [ 0.294118, 0.592157, 0.294118 ],
+          "Material": "Glass",
+          "Reflectance": -1
+        },
+        "Texture": {
+          "$className": "Texture",
+          "$properties": {
+            "Texture": "rbxassetid://6372755229",
+            "Transparency": 0.5,
+            "Face": "Top",
+            "Color3": [0, 0, 0],
+            "StudsPerTileU": 8,
+            "StudsPerTileV": 8
+          }
         }
       }
     }
