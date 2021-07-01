@@ -4,8 +4,12 @@ local _lib = TrainingService.lib
 local Signal = require(_lib.Signal)
 
 local Event = {
-	UUID = 0,
+	UUID = "",
+
 	Gamemode = "",
+
+	MapName = "",
+	MapModel = false,
 
 	Time = {
 		CreatedAt = os.date(),
@@ -23,16 +27,16 @@ local Event = {
 }
 Event.__index = Event
 
-local function generateUUID()
-	local t = os.time()
-	local seed = {"a", "b", "c", "d", "e", "f", "1", "2", "3", "4", "5", "6", "7", "8", "9", "e"}
+local function generateUUID(): string
+	local t: integer = os.clock()
+	local seed: table = {"a", "b", "c", "d", "e", "f", "1", "2", "3", "4", "5", "6", "7", "8", "9", "e"}
 
-	local tb = {}
+	local tb: table = {}
 	for i = 1, 32 do
 		table.insert(tb, seed[math.random(#seed)])
 	end
 
-	local uuid = table.concat(tb)
+	local uuid: string = table.concat(tb)
 	tb = nil
 	seed = nil
 
@@ -47,7 +51,7 @@ local function generateUUID()
 	)
 end
 
-function Event.new(self) -- Creates a new workable event
+function Event.new(self: table): table -- Creates a new workable event
 	self = self or { }
 	setmetatable(self, Event)
 
@@ -57,6 +61,15 @@ function Event.new(self) -- Creates a new workable event
 	self.Time.CreatedAt = os.date()
 
 	return self
+end
+
+function Event:Update(old, changed): table
+	for key, value in pairs(changed) do
+		if old[key] then
+			old[key] = value
+		end
+	end
+	return old
 end
 
 return Event
