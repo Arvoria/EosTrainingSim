@@ -223,31 +223,49 @@ local GAME_STATE = {
 	},
 }
 
+local function deepCopy(t, seen)
+	if type(t) ~= 'table' then
+		return t
+	end
+	if seen and seen[t] then
+		return seen[t]
+	end
+
+	local s = seen or {}
+	local res = setmetatable({}, getmetatable(t))
+
+	s[t] = res
+	for k, v in pairs(t) do
+		res[deepCopy(k, s)] = deepCopy(v, s)
+	end
+
+	return res
+end
+
 local REDUCER = Rodux.combineReducers({
 
 	Events = Rodux.createReducer(GAME_STATE.Events, {
 		UpdateEvent = function(state, action)
-			local updated = action.event:Update(action.updates)
-			state.List[updated.UUID] = updated
-			return updated
+
 		end,
 
 		SetupEvent = function(state, action)
 			print("Current Store:", Store:getState())
 			print("State passed:", state)
 
+			local newState = deepCopy(state)
+
 			local setup, gamemode = action.setup, action.gamemode
 			local event = TrainingService:SetupEvent(setup, gamemode)
 			print("Setup the Event", event)
 
-			state.List[event.UUID] = event
-			print("Placed event into state:", state)
-			return state
+			newState.List[event.UUID] = event
+			print("Placed event into state:", newState)
+			return newState
 		end,
 
 		SetCurrentEvent = function(state, action)
-			state.CurrentEvent = action.event
-			return state
+
 		end
 	})
 })
