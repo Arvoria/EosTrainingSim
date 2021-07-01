@@ -1,5 +1,5 @@
 return function()
-	local Import = require(game:GetService("ReplicatedStorage").Shared.Import)
+	local Import = require(game:GetService("ReplicatedStorage").Shared.packages.Import)
 	local Store = Import("Shared/State")
 	local ServerScripts = game:GetService("ServerScriptService")
 	local TS = ServerScripts:FindFirstChild("TrainingService")
