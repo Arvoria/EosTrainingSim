@@ -11,34 +11,47 @@ local TrainingService = {
 	Events = { }
 }
 
-function TrainingService:CreateEvent(gameMode: string)
-	assert(gameMode and Gamemodes:FindFirstChild(gameMode), "Gamemode must be a valid gamemode")
+local function findGamemode(mode: string)
+	return Gamemodes:FindFirstChild(mode) and require(Gamemodes:FindFirstChild(mode))
+end
 
-	local event: table = Event.new(Event)
-	local mode: table = require(Gamemodes:FindFirstChild(gameMode))
+local function make(setup: table, gamemode: string|table)
+	local event: table = Event.new(setup or Event)
+	local mode: table = typeof(gamemode)=="table"
+		and gamemode.new(gamemode, event)
+		or findGamemode(gamemode)
 
-	mode = Gamemode.new(mode, event)
 	event.Gamemode = mode
-
-	self:ConnectEvent(event)
-
-	print(event.UUID)
 	return event
 end
 
-function TrainingService:SetupEvent(setup: table, gameMode: string)
-	assert(gameMode and Gamemodes:FindFirstChild(gameMode), "Gamemode must be a valid gamemode")
-	assert(setup.Supervisors.Manager ~= 0, "To Build an Event a Manager must be given.")
+function TrainingService:CreateEvent(setup: table, gamemode: string)
+	assert(gamemode and Gamemodes:FindFirstChild(gamemode),
+		"Gamemode must be a valid gamemode")
+	assert(setup.Supervisors.Manager ~= 0,
+		"To Build an Event a Manager must be given.")
 
-	local event: table = Event.new(setup)
-	local mode: table = require(Gamemodes:FindFirstChild(gameMode))
-
-	mode = Gamemode.new(mode, event)
-	event.Gamemode = mode
+	local event: table = make(setup, gamemode)
 
 	self:ConnectEvent(event)
 
-	print(event.UUID)
+	print("Created Event: ", event.UUID)
+	return event
+end
+
+function TrainingService:SetupEvent(setup: table, gamemode: table)
+	assert(gamemode and gamemode._ClassName
+			and Gamemodes:FindFirstChild(gamemode._ClassName),
+		"Gamemode must be a valid gamemode [2]")
+
+	assert(setup.Supervisors.Manager ~= 0,
+		"To Build an Event a Manager must be given.")
+
+	local event: table = make(setup, gamemode)
+
+	self:ConnectEvent(event)
+
+	print("Setup event:", event.UUID)
 	return event
 end
 
