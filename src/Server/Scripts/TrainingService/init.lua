@@ -34,8 +34,6 @@ function TrainingService:CreateEvent(setup: table, gamemode: string)
 	local event: table = make(setup, gamemode)
 
 	self:ConnectEvent(event)
-
-	print("Created Event: ", event.UUID)
 	return event
 end
 
@@ -50,8 +48,6 @@ function TrainingService:SetupEvent(setup: table, gamemode: table)
 	local event: table = make(setup, gamemode)
 
 	self:ConnectEvent(event)
-
-	print("Setup event:", event.UUID)
 	return event
 end
 

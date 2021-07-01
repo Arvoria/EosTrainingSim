@@ -6,8 +6,10 @@ return function()
 	local Modes = TS.Gamemode
 
 	local _shared = {
+		test_mode = require(Modes.FFA),
+
 		custom_setup = {
-			UID = "TestEZ TrainingService.spec.lua:17:",
+			UID = "TestEZ State.spec.lua:",
 
 			Supervisors = {
 				Manager = 123456789,
@@ -20,12 +22,13 @@ return function()
 
 	describeFOCUS("CreateEvent", function()
 		it("Should create an event", function()
+			print("Dispatching action to Store")
 			Store:dispatch({
-				type = "CreateEvent",
+				type = "SetupEvent",
 				setup = _shared.custom_setup,
-				gamemode = require(Modes.FFA)
+				gamemode = _shared.test_mode
 			})
-			print(Store:getState())
+			print("Dispatched")
 		end)
 	end)
 end

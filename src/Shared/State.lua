@@ -1,7 +1,7 @@
 local Import = require(script.Parent.packages.Import)
+
 local Rodux = Import("Packages/Rodux")
 local RunService = Import("RunService")
-
 local TrainingService = Import("ServerScripts/TrainingService")
 
 local IsStudio = RunService:IsStudio()
@@ -16,60 +16,41 @@ if IsStudio and ALLOW_DEBUGGING then
 	loggerMiddleware = Rodux.loggerMiddleware
 end
 
-local function shallowCopy(t)
-	local o = { }
-	for k, v in pairs(t) do
-		o[k] = v
-	end
-	return o
-end
-
-local function deepCopy(obj, seen)
-	if type(obj) ~= 'table' then
-		return obj
-	end
-	if seen and seen[obj] then
-		return seen[obj]
-	end
-
-	local s = seen or {}
-	local res = setmetatable({}, getmetatable(obj))
-
-	s[obj] = res
-
-	for k, v in pairs(obj) do 
-		res[deepCopy(k, s)] = deepCopy(v, s)
-	end
-
-	return res
-  end
-
 local GAME_STATE = {
-	CurrentEvent = { }, -- @module Event
-	CurrentGamemode = { },--@module Gamemode
-	CurrentWeaponPack = { }, --@module WeaponPack
-	Teams = { }, --@module Teams
+	Events = {
+		Current = { },
+		List = { },
+	},
 
-	EventList = { },
+	Gamemode = {
+		Current = { },
+	},
 
-	EventInSession = false,
+	WeaponPack = {
+		Current = { },
+	},
 }
 
 local REDUCER = Rodux.combineReducers({
 
-	event = Rodux.createReducer(GAME_STATE.CurrentEvent, {
+	Events = Rodux.createReducer(GAME_STATE.Events, {
 		UpdateEvent = function(state, action)
 			local updated = action.event:Update(action.updates)
-			state.EventList[updated.UUID] = updated
+			state.List[updated.UUID] = updated
 			return updated
 		end,
 
-		CreateEvent = function(state, action)
+		SetupEvent = function(state, action)
+			print("Current Store:", Store:getState())
+			print("State passed:", state)
+
 			local setup, gamemode = action.setup, action.gamemode
 			local event = TrainingService:SetupEvent(setup, gamemode)
+			print("Setup the Event", event)
 
-			state.EventList[event.UUID] = event
-			return event
+			state.List[event.UUID] = event
+			print("Placed event into state:", state)
+			return state
 		end,
 
 		SetCurrentEvent = function(state, action)
@@ -79,6 +60,6 @@ local REDUCER = Rodux.combineReducers({
 	})
 })
 
-Store = Store.new(REDUCER, GAME_STATE, loggerMiddleware)
+Store = Rodux.Store.new(REDUCER, GAME_STATE, {loggerMiddleware})
 
 return Store
