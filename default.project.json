@@ -2,12 +2,44 @@
   "name": "EosTrainingSim",
   "tree": {
     "$className": "DataModel",
+  
     "HttpService": {
       "$className": "HttpService",
       "$properties": {
         "HttpEnabled": true
       }
-	},
+    },
+
+    "Teams": {
+      "$className": "Teams",
+      "Lobby": {
+        "$className": "Team",
+        "$properties": {
+          "TeamColor": {
+            "Type": "BrickColor",
+            "Value": 1
+          }
+        }
+      },
+      "Green": {
+        "$className": "Team",
+        "$properties": {
+          "TeamColor": {
+            "Type": "BrickColor",
+            "Value": 313
+          }
+        }
+      },
+      "Red": {
+        "$className": "Team",
+        "$properties": {
+          "TeamColor": {
+            "Type": "BrickColor",
+            "Value": 327
+          }
+        }
+      }
+    },
 	
     "Lighting": {
       "$className": "Lighting",
@@ -23,34 +55,51 @@
         "Outlines": false
       },
       "$ignoreUnknownInstances": true
-	},
+	  },
 	
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "Shared": {
         "$path": "src/Shared"
       }
-	},
+	  },
 
-	"ServerScriptService": {
-		"$className": "ServerScriptService",
-		"$path": "src/Server/Scripts"
-	},
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Maps": {
+        "$className": "Folder",
+        "$path": "src/Assets/Maps"
+      },
+      "Weapons": {
+        "$className": "Folder",
+        "$path": "src/Assets/Weapons"
+      },
+      "Props": {
+        "$className": "Folder",
+        "$path": "src/Assets/Props"
+      }
+      
+	  },
 
-	"StarterPlayer": {
-		"$className": "StarterPlayer",
-		"StarterPlayerScripts" : {
-			"$className": "StarterPlayerScripts",
-			"$path": "src/Client"
-		}
-	},
+	  "ServerScriptService": {
+		  "$className": "ServerScriptService",
+		  "$path": "src/Server/Scripts"
+	  },
+
+	  "StarterPlayer": {
+		  "$className": "StarterPlayer",
+		  "StarterPlayerScripts" : {
+			  "$className": "StarterPlayerScripts",
+			  "$path": "src/Client"
+		  }
+	  },
 
     "SoundService": {
       "$className": "SoundService",
       "$properties": {
         "RespectFilteringEnabled": true
       }
-	},
+	  },
 	
     "Workspace": {
       "$className": "Workspace",

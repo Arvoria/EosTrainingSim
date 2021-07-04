@@ -200,7 +200,7 @@ local IsStudio = RunService:IsStudio()
 
 local Store
 
-local ALLOW_DEBUGGING = true
+local ALLOW_DEBUGGING = false
 
 local loggerMiddleware
 
@@ -209,18 +209,7 @@ if IsStudio and ALLOW_DEBUGGING then
 end
 
 local GAME_STATE = {
-	Events = {
-		Current = { },
-		List = { },
-	},
-
-	Gamemode = {
-		Current = { },
-	},
-
-	WeaponPack = {
-		Current = { },
-	},
+	TrainingState = TrainingService.State
 }
 
 local function deepCopy(t, seen)
@@ -244,31 +233,14 @@ end
 
 local REDUCER = Rodux.combineReducers({
 
-	Events = Rodux.createReducer(GAME_STATE.Events, {
-		UpdateEvent = function(state, action)
-
-		end,
-
+	TrainingState = Rodux.createReducer(GAME_STATE.TrainingState, {
 		SetupEvent = function(state, action)
-			print("Current Store:", Store:getState())
-			print("State passed:", state)
-			
-			local t = os.clock()
-			local newState = deepCopy(state)
-			print("Time taken to deep copy:", os.clock()-t)
-
-			local setup, gamemode = action.setup, action.gamemode
-			t = os.clock()
-			local event = TrainingService:SetupEvent(setup, gamemode)
-			print(string.format("Event (%s) Setup took %ds", event.UUID, os.clock()-t))
-
-			newState.List[event.UUID] = event
-			print("Placed event into state:", newState)
-			return newState
-		end,
-
-		SetCurrentEvent = function(state, action)
-
+			--print("state, action:", state, action)
+			local e = TrainingService:SetupEvent(action.setup, action.gamemode)
+			local copy = deepCopy(state)
+			copy.Events[e.UUID] = e.EventMetadata
+			copy.EventList[e.UUID] = false
+			return copy
 		end
 	})
 })
@@ -16622,13 +16594,13 @@ return TestSession
 	local Store = Import("Shared/State")
 	local ServerScripts = game:GetService("ServerScriptService")
 	local TS = ServerScripts:FindFirstChild("TrainingService")
-	local Modes = TS.Gamemode
+	local Modes = TS.Gamemodes
 
 	local _shared = {
-		test_mode = require(Modes.FFA),
+		test_mode = Modes.FFA,
 
 		custom_setup = {
-			UID = "TestEZ State.spec.lua:",
+			UUID = "TestEZ State.spec.lua:",
 
 			Supervisors = {
 				Manager = 123456789,
@@ -16645,7 +16617,7 @@ return TestSession
 			Store:dispatch({
 				type = "SetupEvent",
 				setup = _shared.custom_setup,
-				gamemode = _shared.test_mode
+				gamemode = require(_shared.test_mode)
 			})
 			print("Dispatched")
 		end)
@@ -16671,35 +16643,46 @@ TestEZ.TestBootstrap:run(TestFiles)</string>
         <string name="Source">local _lib = script.lib
 local Promise = require(_lib.Promise)
 local Event = require(script.Event)
-local Gamemodes = script.Gamemode
+local Gamemodes = script.Gamemodes
 local Gamemode = require(Gamemodes)
 
 local TrainingService = {
+	State = {
+		CurrentGamemode = { }, -- Gamemode object ref
+		CurrentEvent = "", -- Event.UUID
+		CurrentTeams = game:GetService("Teams"):GetChildren(),
+		CurrentMap = "",
 
-	CurrentEvent = nil,
-
-	Events = { }
+		Events = { }, --key=Event.UUID, value=Event.EventMetadata
+		EventList = { }, --key=Event.UUID, value=true
+	},
+	Event = Event
 }
 
-local function findGamemode(mode: string)
-	return Gamemodes:FindFirstChild(mode) and require(Gamemodes:FindFirstChild(mode))
+local function findGamemode(mode: string, event: table)
+	local moduleExists: nil|Instance = Gamemodes:FindFirstChild(mode)
+	local gamemode: nil|table = moduleExists and require(moduleExists)
+
+	if not moduleExists then
+		return nil
+	end
+
+	local mode_: table = gamemode.new(gamemode, event)
+	return mode_
 end
 
 local function make(setup: table, gamemode: string|table)
-	local event: table = Event.new(setup or Event)
-	local mode: table = typeof(gamemode)=="table"
-		and gamemode.new(gamemode, event)
-		or findGamemode(gamemode)
+	local event: table = Event.new(setup or Event)	
+	local mode: table = typeof(gamemode)=="table" and gamemode.new(gamemode, event)
+		or findGamemode(gamemode, event)
 
 	event.Gamemode = mode
 	return event
 end
 
-function TrainingService:CreateEvent(setup: table, gamemode: string)
+function TrainingService:CreateEvent(setup: table|nil, gamemode: string)
 	assert(gamemode and Gamemodes:FindFirstChild(gamemode),
 		"Gamemode must be a valid gamemode")
-	assert(setup.Supervisors.Manager ~= 0,
-		"To Build an Event a Manager must be given.")
 
 	local event: table = make(setup, gamemode)
 
@@ -16707,13 +16690,10 @@ function TrainingService:CreateEvent(setup: table, gamemode: string)
 	return event
 end
 
-function TrainingService:SetupEvent(setup: table, gamemode: table)
+function TrainingService:SetupEvent(setup: table|nil, gamemode: table)
 	assert(gamemode and gamemode._ClassName
 			and Gamemodes:FindFirstChild(gamemode._ClassName),
 		"Gamemode must be a valid gamemode [2]")
-
-	assert(setup.Supervisors.Manager ~= 0,
-		"To Build an Event a Manager must be given.")
 
 	local event: table = make(setup, gamemode)
 
@@ -16758,29 +16738,26 @@ local Signal = require(_lib.Signal)
 local Event = {
 	UUID = "",
 
-	Gamemode = "",
-
-	MapName = "",
-	MapModel = false,
-
-	Time = {
-		CreatedAt = os.date(),
-		StartedAt = "",
-		EndedAt = ""
-	},
-
 	Started = false,
 	Ended = false,
-
-	Supervisors = {
-		Manager = 0,
-		Assistants = { }
+	EventMetadata = {
+		TimeInfo = {
+			Started = "",
+			Ended = "",
+			Created = ""
+		},
+		Gamemode = { },
+		HostIds = {
+			Manager = 0, Assistants = { }
+		},
 	}
 }
 Event.__index = Event
 
 local function generateUUID(): string
 	local t: integer = os.clock()
+	math.randomseed(t)
+	t = nil
 	local seed: table = {"a", "b", "c", "d", "e", "f", "1", "2", "3", "4", "5", "6", "7", "8", "9", "e"}
 
 	local tb: table = {}
@@ -16799,7 +16776,7 @@ local function generateUUID(): string
 		string.sub(uuid, 13, 17),
 		string.sub(uuid, 17, 20),
 		string.sub(uuid, 21, 32),
-		t
+		math.random(os.clock())
 	)
 end
 
@@ -16810,7 +16787,7 @@ function Event.new(self: table): table -- Creates a new workable event
 	self.UUID = generateUUID()
 	self.Started = Signal.new()
 	self.Ended = Signal.new()
-	self.Time.CreatedAt = os.date()
+	self.EventMetadata.TimeInfo.Created = os.date()
 
 	return self
 end
@@ -16829,14 +16806,14 @@ return Event</string>
       </Item>
       <Item class="ModuleScript" referent="190">
         <Properties>
-          <string name="Name">Gamemode</string>
+          <string name="Name">Gamemodes</string>
           <string name="Source">local TrainingService = script.Parent
 local _lib = TrainingService.lib
 local Signal = require(_lib.Signal)
 local Promise = require(_lib.Promise)
 
 local Gamemode = {
-	Name = "BaseGamemode",
+	_ClassName = "BaseGamemode",
 	Aliases = { "Default", "Test", "Mock" },
 
 	TimeLimit = 0,
