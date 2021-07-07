@@ -19790,7 +19790,10 @@ local games = {
 	[1] = FFA.new()
 }
 
-Store:dispatch(Event.addGame(E, games[1]))</string>
+Store:dispatch(Event.addGame(E, games[1]))
+print("Games:", Store:getState().EventInfo.Games)
+Store:dispatch(Event.removeGame(E, games[1]))
+print("Games:", Store:getState().EventInfo.Games)</string>
       </Properties>
     </Item>
     <Item class="ModuleScript" referent="194">
