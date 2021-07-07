@@ -1,39 +1,86 @@
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage.Shared
 local TrainingService = script.Parent
 local _lib = TrainingService.lib
 
-local HttpService = game:GetService("HttpService")
 local Signal = require(_lib.Signal)
+local Store = require(Shared.State)
 
 local Event = {
-	UUID = "",
+	GUID = "",
 
 	Started = false,
 	Ended = false,
 
-	EventMetadata = {
-		TimeInfo = {
-			Started = "",
-			Ended = "",
-			Created = ""
-		},
-		Gamemode = { },
-		HostIds = {
-			Manager = 0, Assistants = { }
-		},
-	}
+	Game = {},
+
+	Queue = {},
 }
 Event.__index = Event
 
-function Event.new(self: table): table -- Creates a new workable event
-	self = self or { }
-	setmetatable(self, Event)
+function counter(t)
+	local c = 0
+	for _ in next, t do
+		c = c + 1
+	end
+	return c
+end
 
-	self.UUID = self.UUID~="" and self.UUID or HttpService:GenerateGUID()
-	self.Started = Signal.new()
-	self.Ended = Signal.new()
-	self.EventMetadata = self.EventMetadata or Event.EventMetadata
-	self.EventMetadata.TimeInfo.Created = os.date()
+function Event.new(): table -- Creates a new workable event
+	local self = { }
+	self = setmetatable(self, Event)
+
+	self.GUID = HttpService:GenerateGUID()
+
 	return self
+end
+
+function Event.addGame(event: table, gamemode: table): nil
+	local gameId = gamemode.GameId
+	local gamePos = counter(event.Queue) + 1
+	gamemode.GamePosition = gamePos
+	event.Queue[gameId] = gamemode
+
+	return function(store)
+		store:dispatch({
+			type = "AddGame",
+			id = gameId
+		})
+	end
+end
+
+function Event.removeGame(event: table, gamemode: table): nil
+	local info = gamemode:toStore()
+	if event.Queue[info.GameId] then
+		event.Queue[info.GameId] = nil
+		return function(store)
+			store:dispatch({
+				type = "RemoveGame",
+				id = info.GameId
+			})
+		end
+	end
+end
+
+function Event.run(event: table)
+
+end
+
+--[[
+	Should cancel the current running gamemode and remove it from the queue
+	It should also cancel Event.run()
+]]
+function Event.stop(event: table)
+
+end
+
+--[[
+	Serialises event information ready to put into the Store
+]]
+function Event:toStore()
+	return {}
 end
 
 return Event

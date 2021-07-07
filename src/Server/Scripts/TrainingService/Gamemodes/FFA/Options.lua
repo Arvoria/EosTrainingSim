@@ -7,7 +7,7 @@ local WeaponsStorage = Storage:WaitForChild("Weapons"):GetChildren()
 
 local LOBBY_TEAM_SIZE = -1
 local GREEN_TEAM_SIZE = 0
-local RED_TEAM_SIZE = 0
+local RED_TEAM_SIZE = 8
 
 local function createTeam(name, color)
 	local isDefault = name == "Lobby"
@@ -36,7 +36,7 @@ return {
 		--/ List Maps that can't be chosen, any maps omitted = selectable
 		--/ Default/Recommended maps listed as <Instance|false>
 
-		Bricktops = MapsStorage["Bricktops"] or false,
+		Bricktops = MapsStorage["Bricktops"] or true,
 		Meadows = false
 	},
 
@@ -59,8 +59,8 @@ return {
 
 
 	TeamSizes = {
-		-- List of Teams and their respective Sizes
-		-- -1 is undefined/unlimited
+		-- List of Teams and their respective minimum sizes
+		-- -1 is undefined/unlimited/unbounded
 
 		Lobby = LOBBY_TEAM_SIZE,
 		Green = GREEN_TEAM_SIZE,
@@ -69,7 +69,7 @@ return {
 
 	CustomTeamSizes = false, -- Allows overriding of TeamSizes
 
-	MaxScore = 0, -- MaxScore required for win condition
-	TimeLimit = 0, -- MaxTimeLimit required for end condition
+	MaxScore = 50, -- MaxScore required for win condition
+	TimeLimit = 5, -- MaxTimeLimit required for end condition
 	MinimumPlayers = calculateMinimumPlayers(), -- GREEN+RED>0 or 0
 }

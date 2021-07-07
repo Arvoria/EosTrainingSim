@@ -1,41 +1,91 @@
 local Import = require(script.Parent.packages.Import)
 
 local Rodux = Import("Packages/Rodux")
-local Promise = Import("Packages/Promise")
 local RunService = Import("RunService")
-local TrainingService = Import("ServerScripts/TrainingService")
-local Event = TrainingService.Event
-
-local IsStudio = RunService:IsStudio()
 
 local Store
-
-local ALLOW_DEBUGGING = false
-
-local loggerMiddleware
 local thunkMiddleware = Rodux.thunkMiddleware
 
-if IsStudio and ALLOW_DEBUGGING then
-	loggerMiddleware = Rodux.loggerMiddleware
-end
-
 local GAME_STATE = {
-	Event = { },
-	Gamemode = { Properties = {} },
+	EventInfo = {
+		GUID = "",
 
-	EventList = { }
+		Game = {
+			GameId = "",
+			Map = false,
+			Weapons = false,
+			MaxScore = 0,
+			TimeLimit = 0,
+		},
+
+		Games = {
+		},
+
+		Teams = {
+			Lobby = {
+				Score = 0,
+				Ref = false
+			},
+
+			Green = {
+				Score = 0,
+				Ref = false
+			},
+
+			Red = {
+				Score = 0,
+				Ref = false
+			}
+		}
+	}
 }
+
+local function shallowCopy(t: table)
+	local f = {}
+	for name in pairs(t) do
+		f[name] = t[name]
+	end
+	return f
+end
 
 local REDUCER = Rodux.combineReducers({
 
-	TrainingState = Rodux.createReducer(GAME_STATE.TrainingState, {
+	EventInfo = Rodux.combineReducers({
 
-		BaseReducer = function(state, action)
-			return "Action dispatched"
-		end
-	})
+		Game = Rodux.createReducer(GAME_STATE.EventInfo, {
+			SetActive = function(state, action)
+				print("Dispatching SetActive", state)
+
+				return action.game
+			end
+		}),
+
+		Games = Rodux.createReducer(GAME_STATE.EventInfo, {
+			AddGame = function(state, action)
+				print("Dispatching AddGame", state)
+				local copy = shallowCopy(state)
+				copy[action.id] = true
+				return copy
+			end,
+
+			RemoveGame = function(state, action)
+				print("Dispatching RemoveGame", state)
+				local copy = shallowCopy(state)
+				copy[action.id] = nil
+				return copy
+			end
+		}),
+
+		Teams = Rodux.createReducer(GAME_STATE.EventInfo, {
+			ScoreChanged = function(state, action)
+				print("Dispatching ScoreChanged", state)
+
+				return state
+			end
+		})
+	}),
 })
 
-Store = Rodux.Store.new(REDUCER, GAME_STATE, {loggerMiddleware})
+Store = Rodux.Store.new(REDUCER, GAME_STATE, {thunkMiddleware})
 
 return Store

@@ -1,5 +1,7 @@
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Store = require(ReplicatedStorage.Shared.State)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Store = require(Shared.State)
 
 local TrainingService = script.Parent.Parent
 local _lib = TrainingService.lib
@@ -19,10 +21,14 @@ local function getSelectedOrDefault(choices)
 	return selected
 end
 
-local Options = require(script.Options)
-local Promises = require(script.Promises)
-
 local Gamemode = { -- List of choice settings for the gamemode
+	_Class = "Template",
+
+	GameId = "",
+	GamePosition = 0,
+
+	DefinedOptions = { },
+
 	Parameters = { -- selected choice setting for the gamemode
 		Map = false, -- Options.Maps[1]
 		Weapons = false, -- Options.Weapon[1]
@@ -32,48 +38,60 @@ local Gamemode = { -- List of choice settings for the gamemode
 		CustomTeamSizes = false, -- Options.CustomTeamSizes
 
 		MaxScore = 0, -- Options.MaxScore
-		MaxTimeLimit = 0, -- Options.MaxTimeLimit
+		TimeLimit = 0, -- Options.MaxTimeLimit
+	},
+
+	Teams = {
+		Lobby = { },
+		Green = { },
+		Red = { }
 	},
 
 	Start = false, --> Signal
 	End = false, --> Signal
 
-	WinningTeam = false, --> Promise
-
-	Win = { }, --> (Store: Store<State, Actions>) -> Promise
+	Won = { }, --> (Store: Store<State, Actions>) -> Promise
 	Terminate = { }, --> (Store: Store<State, Actions>) -> Promise
 	Finished = { } --> (Store: Store<State, Actions>) -> Promise
 }
 Gamemode.__index = Gamemode
 
-function Gamemode.new(self)
+function Gamemode.new(self: table, options: table, promises: table): table
 	self = self or Gamemode
+	self.__index = Gamemode
 	setmetatable(self, Gamemode)
 
-	self.init(self)
+	self.init(self, options, promises)
+	return self
 end
 
-function Gamemode.init(self)
-	--/ Add Promise-based Conditions
-	self.Won = Promises.GameConditions.Win
-	self.Terminate = Promises.GameConditions.Terminate
+function Gamemode.init(self, options, promises): nil
+	self.GameId = HttpService:GenerateGUID()
+	--/ Initalise Parameters
+	self:InitParams(self:Options(options))
+
+	--/ Initalise Teams
+	for team, ref in pairs(options.Teams) do
+		self.Teams[team] = {Score = 0, Ref = ref}
+	end
 
 	--/ Add Signals
 	self.Start = Signal.new()
 	self.End = Signal.new()
 
-	--/ Initalise Parameters
-	self:InitParams()
-
 	-- Add Listeners to Signals
-	self.Start:Connect(self.play, self)
-	self.End:Connect(self.stop, self)
+	self.Start:Connect(self.play)
+	self.End:Connect(self.stop)
+
+	--/ Add Promise-based Conditions
+	self.Won = promises.GameConditions.Win
+	self.Terminate = promises.GameConditions.Terminate
 end
 
 
 --[[
 --- runs the gamemode
--- this should be ran when a command is received to start the gamemode
+-- this should be ran when a signal is received to start the gamemode
 --
 ]]
 function Gamemode.play(self)
@@ -89,6 +107,19 @@ function Gamemode.play(self)
 
 	--- race end conditions
 	-- self.End:Fire(self) -> self.stop(self)
+	self.Finished = Promise.any({
+		self.Won(Store):andThen(function(winningTeam)
+			--doSomething if a team wins
+			print(("Finished - %s Won"):format(tostring(winningTeam)))
+			return winningTeam
+		end),
+		self.Terminate(Store):andThen(function(action)
+			--doSomethingElse if an action forcibly terminates the game
+			print(action)
+		end)
+	})
+
+	return self.Finished
 end
 
 
@@ -98,6 +129,7 @@ end
 -- or when the gamemode meets an end condition
 ]]
 function Gamemode.stop(self)
+	print("Stopping:", self)
 	-- no need to worry about the winning team, we can
 	-- use a promise to grab this value
 
@@ -107,39 +139,77 @@ function Gamemode.stop(self)
 	-- reload players
 end
 
-function Gamemode:InitParams()
+function Gamemode.isValid(mode): boolean
+	for param, value in pairs(mode:Params()) do
+		if not mode:CheckPAramValidity(param, value) then
+			return false
+		end
+	end
 
-	self.Parameters.Map = getSelectedOrDefault(Options.Maps)
-	self.Parameters.Weapons = getSelectedOrDefault(Options.Weapons)
-	self.Parameters.TeamSizes = Options.TeamSizes
-
-	self.Parameters.CustomTeamSizes = Options.CustomTeamSizes
-
-	self.Parameters.MaxScore = Options.MaxScore
-	self.Parameters.MaxTimeLimit = Options.MaxTimeLimit
+	return true
 end
 
-function Gamemode:InitPromises()
-	self.Finished = Promise.race({
-		self.Won():andThen(function()
-			--doSomething if a team wins
-		end),
-		self.Terminate():andThen(function()
-			--doSomethingElse if an action forcibly terminates the game
-		end)
-	})
+function Gamemode:InitParams(opt: table): nil
+	self:Params(opt)
 end
 
-function Gamemode:CheckValidity()
-
+function Gamemode:CheckParamValidity(param, value)
+	local opt = self.Parameters[param]
+	for key, val in pairs(opt) do
+		if value == val then
+			return true
+		end
+	end
+	return false
 end
 
-function Gamemode:Options()
-
+function Gamemode:Options(options: table|nil): table
+	self.DefinedOptions = options or self.DefinedOptions
+	return self.DefinedOptions
 end
 
-function Gamemode:Params()
+function Gamemode:Params(newState: table|nil): table
+	if newState == nil then
+		return self.Parameters
+	end
 
+	for key, value in pairs(newState) do
+		if key == "Weapons" or key == "Maps" then
+			self.Parameters[key] = getSelectedOrDefault(newState[key])
+			continue
+		end
+
+		if self.Parameters[key] then
+			self.Parameters[key] = value
+		end
+	end
+
+	return self.Parameters
+end
+
+function Gamemode:Set(param, value): nil
+	if not self:CheckParamValidity(param, value) then
+		error(
+			("Cannot assign value (%s) to parameter (%s) for this gamemode (%s)"):format(
+				tostring(value),
+				tostring(param),
+				self.GameId
+			)
+		)
+	end
+
+	self.Parameters[param] = value
+end
+
+function Gamemode:toStore(): table
+	return {
+		GameId = self.GameId,
+		Map = self.Parameters.Map,
+		Weapons = self.Parameters.Weapons,
+		MaxScore = self.Parameters.MaxScore,
+		TimeLimit = self.Parameters.TimeLimit,
+		Teams = self.Teams
+	}
 end
 
 return Gamemode
