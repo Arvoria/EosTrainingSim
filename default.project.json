@@ -16,27 +16,27 @@
         "$className": "Team",
         "$properties": {
           "TeamColor": {
-            "Type": "BrickColor",
-            "Value": 1
-          }
+            "BrickColor": 1
+          },
+          "AutoAssignable": true
         }
       },
       "Arvorian": {
         "$className": "Team",
         "$properties": {
           "TeamColor": {
-            "Type": "BrickColor",
-            "Value": 313
-          }
+            "BrickColor": 313
+          },
+          "AutoAssignable": false
         }
       },
       "Militants": {
         "$className": "Team",
         "$properties": {
           "TeamColor": {
-            "Type": "BrickColor",
-            "Value": 327
-          }
+            "BrickColor": 327
+          },
+          "AutoAssignable": false
         }
       }
     },
@@ -61,26 +61,32 @@
       "$className": "ReplicatedStorage",
       "Shared": {
         "$path": "src/Shared"
-      }
-	  },
+      },
 
-    "ServerStorage": {
-      "$className": "ServerStorage",
-      "$path": "src/Server/Assets",
-      "$ignoreUnknownInstances": true      
+      "Packages": {
+        "$path": "Packages/Shared"
+      }
 	  },
 
 	  "ServerScriptService": {
 		  "$className": "ServerScriptService",
-		  "$path": "src/Server/Scripts"
+		  "$path": "src/Server",
+
+      "Packages": {
+        "$path": "Packages/Server"
+      }
 	  },
 
 	  "StarterPlayer": {
 		  "$className": "StarterPlayer",
-		  "StarterPlayerScripts" : {
+		  "StarterPlayerScripts": {
 			  "$className": "StarterPlayerScripts",
-			  "$path": "src/Client"
-		  }
+			  "$path": "src/Client/Player"
+		  },
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$path": "src/Client/Character"
+      }
 	  },
 
     "SoundService": {
@@ -92,7 +98,6 @@
 	
     "Workspace": {
       "$className": "Workspace",
-      
       "$properties": {
         "FilteringEnabled": true
       },
@@ -101,7 +106,7 @@
         "$className": "Part",
         
         "$properties": {
-          "Position": [0.0, -5.0, 0.0 ],
+          "Position": [0.0, -5.0, 0.0],
           "Locked": true,
           "Anchored": true,
           "Size": [ 128.0, 10.0, 128.0 ],

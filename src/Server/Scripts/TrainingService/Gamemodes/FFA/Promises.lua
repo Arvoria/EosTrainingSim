@@ -31,7 +31,7 @@ local timeLimit = function(Store)
 	return Promise.delay(delay):andThen(function()
 		return Promise.new(function(resolve)
 			-- Find winning team
-			local _, team = findWinningTeam():await()
+			local team = findWinningTeam():expect()
 
 			resolve(team)
 		end)
@@ -51,6 +51,7 @@ local Promises = {
 	GameConditions = {
 		Win = function(Store)
 			return Promise.race({
+				--> Max Score Reached
 				maxScore(Store):andThen(function(winningTeam)
 					Store:dispatch(function(store)
 						store:dispatch({
@@ -59,7 +60,7 @@ local Promises = {
 						})
 					end)
 				end),
-
+				--> Time Limit Reached
 				timeLimit(Store):andThen(function(winningTeam)
 					Store:dispatch(function(store)
 						store:dispatch({

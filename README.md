@@ -15,7 +15,7 @@ Assets are managed using Remodel and are not tracked or synced using Rojo; this 
 - TestEZ; a BDD-style testing framework.
 
 ## Tooling
-- Rojo; a project management tool,
+- Rojo; a tool to sync files into Roblox Studio,
 - Selene; a blazing-fast modern Lua linter written in Rust,
-- Roblox LSP; a Luau Language Server for Roblox,
+- Roblox LSP; a Roblox Lua Language Server,
 - Remodel; a command line tool for manipulating Roblox files and the instances contained within them.

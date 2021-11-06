@@ -1,0 +1,9 @@
+{
+  "name": "llama",
+  "tree": {
+    "$path": "src",
+    "t": {
+      "$path": "Packages/_Index/shanebutt_t@1.3.1/t"
+    }
+  }
+}

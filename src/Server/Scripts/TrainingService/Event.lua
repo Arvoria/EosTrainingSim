@@ -6,7 +6,7 @@ local TrainingService = script.Parent
 local _lib = TrainingService.lib
 
 local Signal = require(_lib.Signal)
-local Store = require(Shared.State)
+local Store = require(Shared.GameState.State)
 
 local Event = {
 	GUID = "",
@@ -31,13 +31,12 @@ end
 function Event.new(): table -- Creates a new workable event
 	local self = { }
 	self = setmetatable(self, Event)
-
 	self.GUID = HttpService:GenerateGUID()
 
 	return self
 end
 
-function Event.addGame(event: table, gamemode: table): nil
+function Event.addGame(event: table, gamemode: table)
 	local gameId = gamemode.GameId
 	local gamePos = counter(event.Queue) + 1
 	gamemode.GamePosition = gamePos
@@ -51,11 +50,11 @@ function Event.addGame(event: table, gamemode: table): nil
 	end
 end
 
-function Event.removeGame(event: table, gamemode: table): nil
+function Event.removeGame(event: table, gamemode: table)
 	local info = gamemode:toStore()
-	if event.Queue[info.GameId] then
-		event.Queue[info.GameId] = nil
-		return function(store)
+	return function(store)
+		if event.Queue[info.GameId] then
+			event.Queue[info.GameId] = nil
 			store:dispatch({
 				type = "RemoveGame",
 				id = info.GameId

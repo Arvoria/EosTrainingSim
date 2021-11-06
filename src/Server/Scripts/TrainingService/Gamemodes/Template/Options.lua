@@ -9,18 +9,6 @@ local LOBBY_TEAM_SIZE = -1
 local GREEN_TEAM_SIZE = 0
 local RED_TEAM_SIZE = 0
 
-local function createTeam(name, color)
-	local isDefault = name == "Lobby"
-
-	local Team = Instance.new("Team")
-	Team.Name = name
-	Team.TeamColor = BrickColor.new(color)
-	Team.AutoAssignable = isDefault or false
-
-	Team.Parent = TeamService
-	return Team
-end
-
 local function calculateMinimumPlayers()
 	local DefaultMode = (LOBBY_TEAM_SIZE == -1 and GREEN_TEAM_SIZE + RED_TEAM_SIZE == 0)
 	if DefaultMode then
@@ -52,9 +40,9 @@ return {
 		-- List of Teams that can be chosen, any Team omitted won't be selectable
 		-- The customisation of these teams relies on GamemodeParams.CustomTeamSizes
 
-		Lobby = Teams["Lobby"] or createTeam("Lobby", "White"),
-		Green = Teams["Arvorians"] or createTeam("Arvorians", "Forest green"),
-		Red = Teams["Militants"] or createTeam("Militants", "Crimson")
+		Lobby = Teams["Lobby"],
+		Green = Teams["Arvorians"],
+		Red = Teams["Militants"]
 	},
 
 

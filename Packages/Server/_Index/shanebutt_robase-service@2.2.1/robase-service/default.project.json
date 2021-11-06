@@ -1,0 +1,6 @@
+{
+  "name": "robase-service",
+  "tree": {
+    "$path": "src/RobaseService"
+  }
+}

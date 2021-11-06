@@ -1,12 +1,14 @@
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Shared = ReplicatedStorage:WaitForChild("Shared")
-local Store = require(Shared.State)
+local Shared: Folder = ReplicatedStorage:WaitForChild("Shared")
+local Store: table = require(Shared.GameState.State)
 
-local TrainingService = script.Parent.Parent
-local _lib = TrainingService.lib
-local Signal = require(_lib.Signal)
-local Promise = require(_lib.Promise)
+local TrainingService: ModuleScript = script.Parent.Parent
+local _lib: Folder = TrainingService.lib
+local Signal: table = require(_lib.Signal)
+local Promise: table = require(_lib.Promise)
+
+local GenerateUUID: () -> string = require(_lib.GenerateGUID)
 
 local function getSelectedOrDefault(choices)
 	local selected
@@ -57,16 +59,15 @@ local Gamemode = { -- List of choice settings for the gamemode
 Gamemode.__index = Gamemode
 
 function Gamemode.new(self: table, options: table, promises: table): table
-	self = self or Gamemode
+	self = self or {}
 	self.__index = Gamemode
-	setmetatable(self, Gamemode)
 
+	setmetatable(self, Gamemode)
 	self.init(self, options, promises)
 	return self
 end
 
 function Gamemode.init(self, options, promises): nil
-	self.GameId = HttpService:GenerateGUID()
 	--/ Initalise Parameters
 	self:InitParams(self:Options(options))
 

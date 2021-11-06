@@ -1,0 +1,7 @@
+name = "upload-material"
+
+[[inputs]]
+glob = "Assets/MaterialUI/**/*.png"
+codegen = true
+codegen-path = "src/Shared/assets/MaterialUI.lua"
+codegen-base-path = "Assets/MaterialUI"
